@@ -5,6 +5,10 @@ import java.util.Map;
 
 public class Context {
 
+    private final String promptDelimiter;
+
+    private final String completionEndDelimiter;
+
     private final  List<Item> methods;
     private final  List<Item> fields;
     private final  List<Item> classes ;
@@ -13,7 +17,17 @@ public class Context {
     private final  Map<String, List<Item>>methodMap;
     private final  Map<String, List<Item>> fieldMap ;
     private final  Map<String, List<Item>>innerClassesMap;
-    private final String prefix;
+    private final String promptPrefix;
+
+    private final String completionPrefix;
+
+    public String getPromptDelimiter() {
+        return promptDelimiter;
+    }
+
+    public String getCompletionEndDelimiter() {
+        return completionEndDelimiter;
+    }
 
     public List<Item> getMethods() {
         return methods;
@@ -43,8 +57,10 @@ public class Context {
         return innerClassesMap;
     }
 
-    public Context(List<Item> methods, List<Item> fields, List<Item> classes, List<Item> enums,
-                   Map<String, List<Item>> methodMap, Map<String, List<Item>> fieldMap, Map<String, List<Item>> innerClassesMap, String prefix) {
+    public Context(String promptDelimiter, String completionEndDelimiter, List<Item> methods, List<Item> fields, List<Item> classes, List<Item> enums,
+                   Map<String, List<Item>> methodMap, Map<String, List<Item>> fieldMap, Map<String, List<Item>> innerClassesMap, String prefix, String completionPrefix) {
+        this.promptDelimiter = promptDelimiter;
+        this.completionEndDelimiter = completionEndDelimiter;
         this.methods = methods;
         this.fields = fields;
         this.classes = classes;
@@ -52,15 +68,20 @@ public class Context {
         this.methodMap = methodMap;
         this.fieldMap = fieldMap;
         this.innerClassesMap = innerClassesMap;
-        this.prefix = prefix;
+        this.promptPrefix = prefix;
+        this.completionPrefix = completionPrefix;
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public String getPrefix() {
-        return prefix;
+    public String getPromptPrefix() {
+        return promptPrefix;
+    }
+
+    public String getCompletionPrefix() {
+        return completionPrefix;
     }
 
     public static class Builder {
@@ -76,10 +97,33 @@ public class Context {
         private   Map<String, List<Item>> fieldMap ;
         private   Map<String, List<Item>> innerClassesMap;
 
-        private  String prefix ="";
+        private String promptDelimiter = " ###-->";
 
-        public Builder prefix(String prefix) {
-            this.prefix = prefix;
+        private String completionEndDelimiter = " ###END";
+
+        private  String promptPrefix ="";
+
+        private  String completionPrefix=" ";
+
+
+        public Builder completionPrefix(String completionPrefix) {
+            this.completionPrefix = completionPrefix;
+            return this;
+        }
+
+        public Builder promptDelimiter(String promptDelimiter) {
+            this.promptDelimiter = promptDelimiter;
+            return this;
+        }
+
+        public Builder completionEndDelimiter(String completionEndDelimiter) {
+            this.completionEndDelimiter = completionEndDelimiter;
+            return this;
+        }
+
+
+        public Builder promptPrefix(String prefix) {
+            this.promptPrefix = prefix;
             return this;
         }
 
@@ -122,8 +166,8 @@ public class Context {
         }
 
         public Context build() {
-            return new Context(methods, fields, classes, enums, methodMap,
-                    fieldMap, innerClassesMap, prefix);
+            return new Context(promptDelimiter, completionEndDelimiter, methods, fields, classes, enums, methodMap,
+                    fieldMap, innerClassesMap, promptPrefix, completionPrefix);
         }
     }
 }

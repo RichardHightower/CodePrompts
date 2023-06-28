@@ -6,7 +6,7 @@ public class Item {
     private final String importBody;
     private final String body;
     private final String javadoc;
-    private final String name;
+    private final String fullyQualifiedName;
 
     private final String simpleName;
     private final String definition;
@@ -14,12 +14,12 @@ public class Item {
 
     private final JavaItemType type;
 
-    public Item(String importBody, String body, String javadoc, String name,
+    public Item(String importBody, String body, String javadoc, String fullyQualifiedName,
                 String simpleName, String definition, String parent, JavaItemType type) {
         this.importBody = orEmptyString(importBody);
         this.body = orEmptyString(body);
         this.javadoc = orEmptyString(javadoc);
-        this.name = orEmptyString(name);
+        this.fullyQualifiedName = orEmptyString(fullyQualifiedName);
         this.simpleName = orEmptyString(simpleName);
         this.definition = orEmptyString(definition);
         this.parent = orEmptyString(parent);
@@ -39,7 +39,7 @@ public class Item {
     }
 
     public List<String> row() {
-        return List.of(simpleName, type.toString().toLowerCase(), name, definition, javadoc, parent, importBody, body);
+        return List.of(simpleName, type.toString().toLowerCase(), fullyQualifiedName, definition, javadoc, parent, importBody, body);
     }
 
     public String getImportBody() {
@@ -58,8 +58,8 @@ public class Item {
         return javadoc;
     }
 
-    public String getName() {
-        return name;
+    public String getFullyQualifiedName() {
+        return fullyQualifiedName;
     }
 
     public String getDefinition() {
@@ -79,7 +79,7 @@ public class Item {
         return "Item{" +
                 "simpleName='" + simpleName + '\'' +
                 ", type=" + type +
-                ", name='" + name + '\'' +
+                ", name='" + fullyQualifiedName + '\'' +
                 ", definition='" + definition + '\'' +
                 ", parent=" + parent +
                 ", importBody='" + importBody + '\'' +

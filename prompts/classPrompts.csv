@@ -1,6 +1,6 @@
 "prompt","completion"
-"How is class com.cloudurable.java2csv.Java2CSV (Java2CSV) defined?  ##-->","public class Java2CSV { /* the rest ... */ } ##END"
-"What is the source code for class named com.cloudurable.java2csv.Java2CSV with fully qualified name Java2CSV?  ##-->","public class Java2CSV {
+"How is class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV declared? ###-->"," public class Java2CSV { /* the rest ... */ } ###END"
+"How is class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV defined? ###-->"," public class Java2CSV {
 
     /**
      * Extracts the field name from a FieldDeclaration.
@@ -105,7 +105,6 @@
      * @param items the list of items to add to
      */
     private static void parseFile(File file, List<Item> items) {
-        System.out.println(file);
         try {
             CompilationUnit compilationUnit = StaticJavaParser.parse(file);
             compilationUnit.accept(new ClassVisitor(compilationUnit, items), null);
@@ -153,7 +152,7 @@
 
         @Override
         public void visit(ClassOrInterfaceDeclaration cls, Void arg) {
-            if (!cls.isInnerClass()) {
+            if (!cls.isInnerClass() && !cls.isStatic()) {
                 visitClass(compilationUnit.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse(""""), compilationUnit.getImports().stream().map(Node::toString).collect(Collectors.joining(""n"")), cls);
             }
             super.visit(cls, arg);
@@ -167,16 +166,13 @@
          * @param cls         the class or interface
          */
         public void visitClass(String packageName, String importBody, ClassOrInterfaceDeclaration cls) {
-            if (cls.getNameAsString().toString().equals(""Java2CSV"")) {
-                System.out.println("""");
-            }
             final String[] parts = extractJavaDoc(getBodyDefinition(cls, 200));
             final String javaDoc = parts[0];
             final String code = parts[1];
             Item item = Item.builder().importBody(importBody).type(cls.isInterface() ? JavaItemType.INTERFACE : JavaItemType.CLASS).name(packageName + ""."" + cls.getNameAsString()).simpleName(cls.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).body(code).build();
             items.add(item);
-            System.out.println(item);
-            cls.getImplementedTypes().stream().filter(ClassOrInterfaceType::isClassOrInterfaceType).forEach(clsInner -> visitClassType(packageName, importBody, item, clsInner.asClassOrInterfaceType()));
+            //           System.out.println(item);
+            cls.getChildNodes().stream().filter(n -> n instanceof ClassOrInterfaceDeclaration).forEach(clsInner -> visitClassType(packageName, importBody, item, (ClassOrInterfaceDeclaration) clsInner));
             cls.getMethods().forEach(method -> visitMethod(item, method));
             cls.getFields().forEach(field -> visitField(item, field));
         }
@@ -189,188 +185,26 @@
          * @param parent      the parent item
          * @param cls         the class or interface type
          */
-        private void visitClassType(String packageName, String importBody, Item parent, ClassOrInterfaceType cls) {
+        private void visitClassType(String packageName, String importBody, Item parent, ClassOrInterfaceDeclaration cls) {
             final String[] parts = extractJavaDoc(getBodyDefinition(cls, 200));
             final String javaDoc = parts[0];
             final String code = parts[1];
             Item item = Item.builder().importBody(importBody).type(JavaItemType.CLASS).name(parent.getName() + ""."" + cls.getNameAsString()).simpleName(cls.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).parent(parent).body(code).build();
             items.add(item);
-            System.out.println(item);
+            //System.out.println(item);
         }
- ##END"
-"What does class named com.cloudurable.java2csv.Java2CSV with fully qualified name Java2CSV do according to the JavaDoc?  ##-->","/**
+
+        /**
+         * Visits a field.
+         *
+ ###END"
+"What does class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV do according to the JavaDoc? ###-->"," /**
  * Parse Java files and turn them into CSV files.
  */
- ##END"
-"What are the imports for class named com.cloudurable.java2csv.Java2CSV with fully qualified name Java2CSV?  ##-->","import com.github.javaparser.StaticJavaParser;
-
-import com.github.javaparser.ast.CompilationUnit;
-
-import com.github.javaparser.ast.Node;
-
-import com.github.javaparser.ast.body.*;
-
-import com.github.javaparser.ast.nodeTypes.NodeWithName;
-
-import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
-
-import com.github.javaparser.ast.type.ClassOrInterfaceType;
-
-import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-
-import com.opencsv.CSVWriter;
-
-import java.io.File;
-
-import java.io.FileWriter;
-
-import java.io.IOException;
-
-import java.nio.file.Files;
-
-import java.nio.file.Path;
-
-import java.util.ArrayList;
-
-import java.util.List;
-
-import java.util.Optional;
-
-import java.util.regex.Matcher;
-
-import java.util.regex.Pattern;
-
-import java.util.stream.Collectors;
-
-import java.util.stream.Stream;
- ##END"
-"What methods does class named com.cloudurable.java2csv.Java2CSV with fully qualified name Java2CSV have?  ##-->","private static String fieldName(FieldDeclaration field) { /* the rest ... */ }
-private static String getSmallDefinition(String text) { /* the rest ... */ }
-private static String getBodyDefinition(Object n, int numLinesMax) { /* the rest ... */ }
-public static void main(String[] args) throws IOException { /* the rest ... */ }
-private static List<Item> scanDirectory(File directoryPath) throws IOException { /* the rest ... */ }
-private static void parseFile(File file, List<Item> items) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Java2CSV.fieldName (fieldName) do according to the JavaDoc?  ##-->","/**
- * Extracts the field name from a FieldDeclaration.
- *
- * @param field the input field
- * @return the field name
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Java2CSV.fieldName (fieldName) from class com.cloudurable.java2csv.Java2CSV?  ##-->","private static String fieldName(FieldDeclaration field) {
-    final Optional<VariableDeclarator> variableDeclarator = field.getChildNodes().stream().filter(node -> node instanceof VariableDeclarator).map(n -> (VariableDeclarator) n).findFirst();
-    return variableDeclarator.map(NodeWithSimpleName::getNameAsString).orElse(""NO_NAME"");
-} ##END"
-"How is the method com.cloudurable.java2csv.Java2CSV.fieldName (fieldName) from class com.cloudurable.java2csv.Java2CSV defined?  ##-->","private static String fieldName(FieldDeclaration field) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Java2CSV.getSmallDefinition (getSmallDefinition) do according to the JavaDoc?  ##-->","/**
- * Returns a small definition of the given text by keeping only the first line and replacing the rest with a placeholder.
- *
- * @param text the input text
- * @return the small definition
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Java2CSV.getSmallDefinition (getSmallDefinition) from class com.cloudurable.java2csv.Java2CSV?  ##-->","private static String getSmallDefinition(String text) {
-    // Split the string into an array of lines
-    String[] lines = text.split(""\{"");
-    return lines[0] + ""{ /* the rest ... */ }"";
-} ##END"
-"How is the method com.cloudurable.java2csv.Java2CSV.getSmallDefinition (getSmallDefinition) from class com.cloudurable.java2csv.Java2CSV defined?  ##-->","private static String getSmallDefinition(String text) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Java2CSV.getBodyDefinition (getBodyDefinition) do according to the JavaDoc?  ##-->","/**
- * Returns the definition of the given object's body with a maximum number of lines.
- * If the number of lines exceeds the maximum, an empty string is returned.
- *
- * @param n            the object
- * @param numLinesMax  the maximum number of lines
- * @return the body definition
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Java2CSV.getBodyDefinition (getBodyDefinition) from class com.cloudurable.java2csv.Java2CSV?  ##-->","private static String getBodyDefinition(Object n, int numLinesMax) {
-    String[] lines = n.toString().split(""n"");
-    if (lines.length > numLinesMax) {
-        int count = 0;
-        StringBuilder builder = new StringBuilder(lines.length * 20);
-        for (String line : lines) {
-            builder.append(line).append('n');
-            count++;
-            if (count >= 200) {
-                break;
-            }
-        }
-        return builder.toString();
-    } else {
-        return n.toString();
-    }
-} ##END"
-"How is the method com.cloudurable.java2csv.Java2CSV.getBodyDefinition (getBodyDefinition) from class com.cloudurable.java2csv.Java2CSV defined?  ##-->","private static String getBodyDefinition(Object n, int numLinesMax) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Java2CSV.main (main) do according to the JavaDoc?  ##-->","/**
- * Entry point of the program.
- *
- * @param args the command line arguments
- * @throws IOException if an I/O error occurs
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Java2CSV.main (main) from class com.cloudurable.java2csv.Java2CSV?  ##-->","public static void main(String[] args) throws IOException {
-    try {
-        final String directoryPath = args.length > 0 ? args[0] : ""."";
-        final String outputFile = args.length > 1 ? args[1] : ""output.csv"";
-        File dir = new File(directoryPath).getCanonicalFile();
-        if (dir.exists() && dir.isDirectory()) {
-            List<Item> items = scanDirectory(dir);
-            List<List<String>> lines = items.stream().map(Item::row).collect(Collectors.toList());
-            try (CSVWriter writer = new CSVWriter(new FileWriter(outputFile))) {
-                writer.writeNext(Item.headers().toArray(new String[0]));
-                for (List<String> line : lines) {
-                    writer.writeNext(line.toArray(new String[0]));
-                }
-            }
-        } else {
-            System.out.printf(""Directory does not exist %s or is not a directory"", dir);
-        }
-    } catch (Exception ex) {
-        ex.printStackTrace();
-    }
-} ##END"
-"How is the method com.cloudurable.java2csv.Java2CSV.main (main) from class com.cloudurable.java2csv.Java2CSV defined?  ##-->","public static void main(String[] args) throws IOException { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Java2CSV.scanDirectory (scanDirectory) do according to the JavaDoc?  ##-->","/**
- * Scans the given directory and returns a list of items representing the Java code.
- *
- * @param directoryPath the directory path
- * @return the list of items
- * @throws IOException if an I/O error occurs
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Java2CSV.scanDirectory (scanDirectory) from class com.cloudurable.java2csv.Java2CSV?  ##-->","private static List<Item> scanDirectory(File directoryPath) throws IOException {
-    List<Item> items = new ArrayList<>(32);
-    try (Stream<Path> walk = Files.walk(directoryPath.toPath())) {
-        walk.filter(Files::isRegularFile).filter(p -> p.toString().endsWith("".java"")).forEach(p -> parseFile(p.toFile(), items));
-    } catch (IOException e) {
-        // Handle the IOException if an error occurs while scanning the directory
-        System.err.println(""An error occurred while scanning the directory: "" + e.getMessage());
-        throw e;
-    }
-    return items;
-} ##END"
-"How is the method com.cloudurable.java2csv.Java2CSV.scanDirectory (scanDirectory) from class com.cloudurable.java2csv.Java2CSV defined?  ##-->","private static List<Item> scanDirectory(File directoryPath) throws IOException { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Java2CSV.parseFile (parseFile) do according to the JavaDoc?  ##-->","/**
- * Parses the given file and adds the parsed items to the list.
- *
- * @param file  the file to parse
- * @param items the list of items to add to
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Java2CSV.parseFile (parseFile) from class com.cloudurable.java2csv.Java2CSV?  ##-->","private static void parseFile(File file, List<Item> items) {
-    System.out.println(file);
-    try {
-        CompilationUnit compilationUnit = StaticJavaParser.parse(file);
-        compilationUnit.accept(new ClassVisitor(compilationUnit, items), null);
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-} ##END"
-"How is the method com.cloudurable.java2csv.Java2CSV.parseFile (parseFile) from class com.cloudurable.java2csv.Java2CSV defined?  ##-->","private static void parseFile(File file, List<Item> items) { /* the rest ... */ } ##END"
-"What fields does class named com.cloudurable.java2csv.Java2CSV with fully qualified name Java2CSV have?  ##-->"," ##END"
-"How is class com.cloudurable.java2csv.ClassVisitor (ClassVisitor) defined?  ##-->","private static class ClassVisitor extends VoidVisitorAdapter<Void> { /* the rest ... */ } ##END"
-"What is the source code for class named com.cloudurable.java2csv.ClassVisitor with fully qualified name ClassVisitor?  ##-->","private static class ClassVisitor extends VoidVisitorAdapter<Void> {
+ ###END"
+"What are the inner classes defined inside of class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static class ClassVisitor extends VoidVisitorAdapter<Void> { /* the rest ... */ } ###END"
+"How is class named ClassVisitor whose fully qualified class name com.cloudurable.java2csv.Java2CSV.ClassVisitor declared? ###-->"," private static class ClassVisitor extends VoidVisitorAdapter<Void> { /* the rest ... */ } ###END"
+"How is class named ClassVisitor whose fully qualified class name com.cloudurable.java2csv.Java2CSV.ClassVisitor defined? ###-->"," private static class ClassVisitor extends VoidVisitorAdapter<Void> {
 
     static Pattern JAVA_DOC_REGEX = Pattern.compile(""^/\*\*.*?\*/\s*"", Pattern.DOTALL);
 
@@ -406,7 +240,7 @@ private static void parseFile(File file, List<Item> items) { /* the rest ... */ 
 
     @Override
     public void visit(ClassOrInterfaceDeclaration cls, Void arg) {
-        if (!cls.isInnerClass()) {
+        if (!cls.isInnerClass() && !cls.isStatic()) {
             visitClass(compilationUnit.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse(""""), compilationUnit.getImports().stream().map(Node::toString).collect(Collectors.joining(""n"")), cls);
         }
         super.visit(cls, arg);
@@ -420,16 +254,13 @@ private static void parseFile(File file, List<Item> items) { /* the rest ... */ 
      * @param cls         the class or interface
      */
     public void visitClass(String packageName, String importBody, ClassOrInterfaceDeclaration cls) {
-        if (cls.getNameAsString().toString().equals(""Java2CSV"")) {
-            System.out.println("""");
-        }
         final String[] parts = extractJavaDoc(getBodyDefinition(cls, 200));
         final String javaDoc = parts[0];
         final String code = parts[1];
         Item item = Item.builder().importBody(importBody).type(cls.isInterface() ? JavaItemType.INTERFACE : JavaItemType.CLASS).name(packageName + ""."" + cls.getNameAsString()).simpleName(cls.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).body(code).build();
         items.add(item);
-        System.out.println(item);
-        cls.getImplementedTypes().stream().filter(ClassOrInterfaceType::isClassOrInterfaceType).forEach(clsInner -> visitClassType(packageName, importBody, item, clsInner.asClassOrInterfaceType()));
+        //           System.out.println(item);
+        cls.getChildNodes().stream().filter(n -> n instanceof ClassOrInterfaceDeclaration).forEach(clsInner -> visitClassType(packageName, importBody, item, (ClassOrInterfaceDeclaration) clsInner));
         cls.getMethods().forEach(method -> visitMethod(item, method));
         cls.getFields().forEach(field -> visitField(item, field));
     }
@@ -442,13 +273,13 @@ private static void parseFile(File file, List<Item> items) { /* the rest ... */ 
      * @param parent      the parent item
      * @param cls         the class or interface type
      */
-    private void visitClassType(String packageName, String importBody, Item parent, ClassOrInterfaceType cls) {
+    private void visitClassType(String packageName, String importBody, Item parent, ClassOrInterfaceDeclaration cls) {
         final String[] parts = extractJavaDoc(getBodyDefinition(cls, 200));
         final String javaDoc = parts[0];
         final String code = parts[1];
         Item item = Item.builder().importBody(importBody).type(JavaItemType.CLASS).name(parent.getName() + ""."" + cls.getNameAsString()).simpleName(cls.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).parent(parent).body(code).build();
         items.add(item);
-        System.out.println(item);
+        //System.out.println(item);
     }
 
     /**
@@ -463,7 +294,7 @@ private static void parseFile(File file, List<Item> items) { /* the rest ... */ 
         final String code = parts[1];
         Item item = Item.builder().type(JavaItemType.FIELD).name(parent.getName() + ""."" + fieldName(field)).simpleName(fieldName(field)).definition(code).javadoc(javaDoc).parent(parent).build();
         items.add(item);
-        System.out.println(item);
+        //System.out.println(item);
     }
 
     /**
@@ -478,7 +309,7 @@ private static void parseFile(File file, List<Item> items) { /* the rest ... */ 
         final String code = parts[1];
         Item item = Item.builder().type(JavaItemType.METHOD).name(parent.getName() + ""."" + method.getName()).simpleName(method.getName().toString()).definition(getSmallDefinition(code)).javadoc(javaDoc).parent(parent).body(code).build();
         items.add(item);
-        System.out.println(item);
+        //System.out.println(item);
     }
 
     @Override
@@ -500,16 +331,16 @@ private static void parseFile(File file, List<Item> items) { /* the rest ... */ 
         final String code = parts[1];
         Item item = Item.builder().importBody(importBody).type(JavaItemType.ENUM).name(packageName + ""."" + enumD.getNameAsString()).simpleName(enumD.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).body(code).build();
         items.add(item);
-        System.out.println(item);
+        //System.out.println(item);
         enumD.getMethods().forEach(method -> visitMethod(item, method));
         enumD.getFields().forEach(field -> visitField(item, field));
     }
-} ##END"
-"What does class named com.cloudurable.java2csv.ClassVisitor with fully qualified name ClassVisitor do according to the JavaDoc?  ##-->","/**
+} ###END"
+"What does class named ClassVisitor whose fully qualified class name com.cloudurable.java2csv.Java2CSV.ClassVisitor do according to the JavaDoc? ###-->"," /**
  * Visitor for visiting classes, interfaces, and enums.
  */
- ##END"
-"What are the imports for class named com.cloudurable.java2csv.ClassVisitor with fully qualified name ClassVisitor?  ##-->","import com.github.javaparser.StaticJavaParser;
+ ###END"
+"What are the imports for class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," import com.github.javaparser.StaticJavaParser;
 
 import com.github.javaparser.ast.CompilationUnit;
 
@@ -550,155 +381,132 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import java.util.stream.Stream;
- ##END"
-"What methods does class named com.cloudurable.java2csv.ClassVisitor with fully qualified name ClassVisitor have?  ##-->","public static String[] extractJavaDoc(String code) { /* the rest ... */ }
-@Override
-public void visit(ClassOrInterfaceDeclaration cls, Void arg) { /* the rest ... */ }
-public void visitClass(String packageName, String importBody, ClassOrInterfaceDeclaration cls) { /* the rest ... */ }
-private void visitClassType(String packageName, String importBody, Item parent, ClassOrInterfaceType cls) { /* the rest ... */ }
-private void visitField(Item parent, FieldDeclaration field) { /* the rest ... */ }
-public void visitMethod(Item parent, final MethodDeclaration method) { /* the rest ... */ }
-@Override
-public void visit(EnumDeclaration n, Void arg) { /* the rest ... */ }
-private void visitEnum(String packageName, String importBody, EnumDeclaration enumD) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.ClassVisitor.extractJavaDoc (extractJavaDoc) do according to the JavaDoc?  ##-->","/**
- * Extracts the Javadoc comment and method code from the given code.
+ ###END"
+"What methods does class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV have? ###-->"," private static String fieldName(FieldDeclaration field) { /* the rest ... */ }
+private static String getSmallDefinition(String text) { /* the rest ... */ }
+private static String getBodyDefinition(Object n, int numLinesMax) { /* the rest ... */ }
+public static void main(String[] args) throws IOException { /* the rest ... */ }
+private static List<Item> scanDirectory(File directoryPath) throws IOException { /* the rest ... */ }
+private static void parseFile(File file, List<Item> items) { /* the rest ... */ } ###END"
+"What does method fieldName do according to the JavaDoc from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," /**
+ * Extracts the field name from a FieldDeclaration.
  *
- * @param code the input code
- * @return an array containing the Javadoc comment and method code
+ * @param field the input field
+ * @return the field name
  */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.extractJavaDoc (extractJavaDoc) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","public static String[] extractJavaDoc(String code) {
-    // Define the regular expression pattern to match Javadoc comments
-    Matcher matcher = JAVA_DOC_REGEX.matcher(code);
-    if (matcher.find()) {
-        // Extract the Javadoc comment
-        String javadoc = matcher.group();
-        // Extract the method code
-        String methodCode = code.substring(matcher.end());
-        return new String[] { javadoc, methodCode };
+ ###END"
+"How is method fieldName defined from class class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static String fieldName(FieldDeclaration field) {
+    final Optional<VariableDeclarator> variableDeclarator = field.getChildNodes().stream().filter(node -> node instanceof VariableDeclarator).map(n -> (VariableDeclarator) n).findFirst();
+    return variableDeclarator.map(NodeWithSimpleName::getNameAsString).orElse(""NO_NAME"");
+} ###END"
+"What is the method fieldName signature from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static String fieldName(FieldDeclaration field) { /* the rest ... */ } ###END"
+"What does method getSmallDefinition do according to the JavaDoc from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," /**
+ * Returns a small definition of the given text by keeping only the first line and replacing the rest with a placeholder.
+ *
+ * @param text the input text
+ * @return the small definition
+ */
+ ###END"
+"How is method getSmallDefinition defined from class class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static String getSmallDefinition(String text) {
+    // Split the string into an array of lines
+    String[] lines = text.split(""\{"");
+    return lines[0] + ""{ /* the rest ... */ }"";
+} ###END"
+"What is the method getSmallDefinition signature from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static String getSmallDefinition(String text) { /* the rest ... */ } ###END"
+"What does method getBodyDefinition do according to the JavaDoc from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," /**
+ * Returns the definition of the given object's body with a maximum number of lines.
+ * If the number of lines exceeds the maximum, an empty string is returned.
+ *
+ * @param n            the object
+ * @param numLinesMax  the maximum number of lines
+ * @return the body definition
+ */
+ ###END"
+"How is method getBodyDefinition defined from class class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static String getBodyDefinition(Object n, int numLinesMax) {
+    String[] lines = n.toString().split(""n"");
+    if (lines.length > numLinesMax) {
+        int count = 0;
+        StringBuilder builder = new StringBuilder(lines.length * 20);
+        for (String line : lines) {
+            builder.append(line).append('n');
+            count++;
+            if (count >= 200) {
+                break;
+            }
+        }
+        return builder.toString();
     } else {
-        // No Javadoc found
-        return new String[] { """", code };
+        return n.toString();
     }
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.extractJavaDoc (extractJavaDoc) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","public static String[] extractJavaDoc(String code) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.visit (visit) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","@Override
-public void visit(ClassOrInterfaceDeclaration cls, Void arg) {
-    if (!cls.isInnerClass()) {
-        visitClass(compilationUnit.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse(""""), compilationUnit.getImports().stream().map(Node::toString).collect(Collectors.joining(""n"")), cls);
+} ###END"
+"What is the method getBodyDefinition signature from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static String getBodyDefinition(Object n, int numLinesMax) { /* the rest ... */ } ###END"
+"What does method main do according to the JavaDoc from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," /**
+ * Entry point of the program.
+ *
+ * @param args the command line arguments
+ * @throws IOException if an I/O error occurs
+ */
+ ###END"
+"How is method main defined from class class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," public static void main(String[] args) throws IOException {
+    try {
+        final String directoryPath = args.length > 0 ? args[0] : ""."";
+        final String outputFile = args.length > 1 ? args[1] : ""output.csv"";
+        File dir = new File(directoryPath).getCanonicalFile();
+        if (dir.exists() && dir.isDirectory()) {
+            List<Item> items = scanDirectory(dir);
+            List<List<String>> lines = items.stream().map(Item::row).collect(Collectors.toList());
+            try (CSVWriter writer = new CSVWriter(new FileWriter(outputFile))) {
+                writer.writeNext(Item.headers().toArray(new String[0]));
+                for (List<String> line : lines) {
+                    writer.writeNext(line.toArray(new String[0]));
+                }
+            }
+        } else {
+            System.out.printf(""Directory does not exist %s or is not a directory"", dir);
+        }
+    } catch (Exception ex) {
+        ex.printStackTrace();
     }
-    super.visit(cls, arg);
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.visit (visit) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","@Override
-public void visit(ClassOrInterfaceDeclaration cls, Void arg) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.ClassVisitor.visitClass (visitClass) do according to the JavaDoc?  ##-->","/**
- * Visits a class or interface.
+} ###END"
+"What is the method main signature from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," public static void main(String[] args) throws IOException { /* the rest ... */ } ###END"
+"What does method scanDirectory do according to the JavaDoc from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," /**
+ * Scans the given directory and returns a list of items representing the Java code.
  *
- * @param packageName the package name
- * @param importBody  the import statements
- * @param cls         the class or interface
+ * @param directoryPath the directory path
+ * @return the list of items
+ * @throws IOException if an I/O error occurs
  */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.visitClass (visitClass) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","public void visitClass(String packageName, String importBody, ClassOrInterfaceDeclaration cls) {
-    if (cls.getNameAsString().toString().equals(""Java2CSV"")) {
-        System.out.println("""");
+ ###END"
+"How is method scanDirectory defined from class class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static List<Item> scanDirectory(File directoryPath) throws IOException {
+    List<Item> items = new ArrayList<>(32);
+    try (Stream<Path> walk = Files.walk(directoryPath.toPath())) {
+        walk.filter(Files::isRegularFile).filter(p -> p.toString().endsWith("".java"")).forEach(p -> parseFile(p.toFile(), items));
+    } catch (IOException e) {
+        // Handle the IOException if an error occurs while scanning the directory
+        System.err.println(""An error occurred while scanning the directory: "" + e.getMessage());
+        throw e;
     }
-    final String[] parts = extractJavaDoc(getBodyDefinition(cls, 200));
-    final String javaDoc = parts[0];
-    final String code = parts[1];
-    Item item = Item.builder().importBody(importBody).type(cls.isInterface() ? JavaItemType.INTERFACE : JavaItemType.CLASS).name(packageName + ""."" + cls.getNameAsString()).simpleName(cls.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).body(code).build();
-    items.add(item);
-    System.out.println(item);
-    cls.getImplementedTypes().stream().filter(ClassOrInterfaceType::isClassOrInterfaceType).forEach(clsInner -> visitClassType(packageName, importBody, item, clsInner.asClassOrInterfaceType()));
-    cls.getMethods().forEach(method -> visitMethod(item, method));
-    cls.getFields().forEach(field -> visitField(item, field));
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.visitClass (visitClass) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","public void visitClass(String packageName, String importBody, ClassOrInterfaceDeclaration cls) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.ClassVisitor.visitClassType (visitClassType) do according to the JavaDoc?  ##-->","/**
- * Visits a class or interface type.
+    return items;
+} ###END"
+"What is the method scanDirectory signature from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static List<Item> scanDirectory(File directoryPath) throws IOException { /* the rest ... */ } ###END"
+"What does method parseFile do according to the JavaDoc from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," /**
+ * Parses the given file and adds the parsed items to the list.
  *
- * @param packageName the package name
- * @param importBody  the import statements
- * @param parent      the parent item
- * @param cls         the class or interface type
+ * @param file  the file to parse
+ * @param items the list of items to add to
  */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.visitClassType (visitClassType) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","private void visitClassType(String packageName, String importBody, Item parent, ClassOrInterfaceType cls) {
-    final String[] parts = extractJavaDoc(getBodyDefinition(cls, 200));
-    final String javaDoc = parts[0];
-    final String code = parts[1];
-    Item item = Item.builder().importBody(importBody).type(JavaItemType.CLASS).name(parent.getName() + ""."" + cls.getNameAsString()).simpleName(cls.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).parent(parent).body(code).build();
-    items.add(item);
-    System.out.println(item);
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.visitClassType (visitClassType) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","private void visitClassType(String packageName, String importBody, Item parent, ClassOrInterfaceType cls) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.ClassVisitor.visitField (visitField) do according to the JavaDoc?  ##-->","/**
- * Visits a field.
- *
- * @param parent the parent item
- * @param field  the field
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.visitField (visitField) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","private void visitField(Item parent, FieldDeclaration field) {
-    final String[] parts = extractJavaDoc(field.toString());
-    final String javaDoc = parts[0];
-    final String code = parts[1];
-    Item item = Item.builder().type(JavaItemType.FIELD).name(parent.getName() + ""."" + fieldName(field)).simpleName(fieldName(field)).definition(code).javadoc(javaDoc).parent(parent).build();
-    items.add(item);
-    System.out.println(item);
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.visitField (visitField) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","private void visitField(Item parent, FieldDeclaration field) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.ClassVisitor.visitMethod (visitMethod) do according to the JavaDoc?  ##-->","/**
- * Visits a method.
- *
- * @param parent the parent item
- * @param method the method
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.visitMethod (visitMethod) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","public void visitMethod(Item parent, final MethodDeclaration method) {
-    String[] parts = extractJavaDoc(getBodyDefinition(method, 500));
-    final String javaDoc = parts[0];
-    final String code = parts[1];
-    Item item = Item.builder().type(JavaItemType.METHOD).name(parent.getName() + ""."" + method.getName()).simpleName(method.getName().toString()).definition(getSmallDefinition(code)).javadoc(javaDoc).parent(parent).body(code).build();
-    items.add(item);
-    System.out.println(item);
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.visitMethod (visitMethod) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","public void visitMethod(Item parent, final MethodDeclaration method) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.visit (visit) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","@Override
-public void visit(EnumDeclaration n, Void arg) {
-    visitEnum(compilationUnit.getPackageDeclaration().map(NodeWithName::getNameAsString).orElse(""""), compilationUnit.getImports().stream().map(Node::toString).collect(Collectors.joining(""n"")), n);
-    super.visit(n, arg);
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.visit (visit) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","@Override
-public void visit(EnumDeclaration n, Void arg) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.ClassVisitor.visitEnum (visitEnum) do according to the JavaDoc?  ##-->","/**
- * Visits an enum.
- *
- * @param packageName the package name
- * @param importBody  the import statements
- * @param enumD       the enum
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.ClassVisitor.visitEnum (visitEnum) from class com.cloudurable.java2csv.ClassVisitor?  ##-->","private void visitEnum(String packageName, String importBody, EnumDeclaration enumD) {
-    String[] parts = extractJavaDoc(getBodyDefinition(enumD, 200));
-    final String javaDoc = parts[0];
-    final String code = parts[1];
-    Item item = Item.builder().importBody(importBody).type(JavaItemType.ENUM).name(packageName + ""."" + enumD.getNameAsString()).simpleName(enumD.getNameAsString()).definition(getSmallDefinition(code)).javadoc(javaDoc).body(code).build();
-    items.add(item);
-    System.out.println(item);
-    enumD.getMethods().forEach(method -> visitMethod(item, method));
-    enumD.getFields().forEach(field -> visitField(item, field));
-} ##END"
-"How is the method com.cloudurable.java2csv.ClassVisitor.visitEnum (visitEnum) from class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","private void visitEnum(String packageName, String importBody, EnumDeclaration enumD) { /* the rest ... */ } ##END"
-"What fields does class named com.cloudurable.java2csv.ClassVisitor with fully qualified name ClassVisitor have?  ##-->","static Pattern JAVA_DOC_REGEX = Pattern.compile(""^/\*\*.*?\*/\s*"", Pattern.DOTALL);
-private final CompilationUnit compilationUnit;
-private final List<Item> items; ##END"
-"How is the field com.cloudurable.java2csv.ClassVisitor.JAVA_DOC_REGEX (JAVA_DOC_REGEX) which is in class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","static Pattern JAVA_DOC_REGEX = Pattern.compile(""^/\*\*.*?\*/\s*"", Pattern.DOTALL); ##END"
-"How is the field com.cloudurable.java2csv.ClassVisitor.compilationUnit (compilationUnit) which is in class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","private final CompilationUnit compilationUnit; ##END"
-"How is the field com.cloudurable.java2csv.ClassVisitor.items (items) which is in class com.cloudurable.java2csv.ClassVisitor defined?  ##-->","private final List<Item> items; ##END"
-"How is class com.cloudurable.java2csv.Item (Item) defined?  ##-->","public class Item { /* the rest ... */ } ##END"
-"What is the source code for class named com.cloudurable.java2csv.Item with fully qualified name Item?  ##-->","public class Item {
+ ###END"
+"How is method parseFile defined from class class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static void parseFile(File file, List<Item> items) {
+    try {
+        CompilationUnit compilationUnit = StaticJavaParser.parse(file);
+        compilationUnit.accept(new ClassVisitor(compilationUnit, items), null);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+} ###END"
+"What is the method parseFile signature from class named Java2CSV whose fully qualified class name com.cloudurable.java2csv.Java2CSV? ###-->"," private static void parseFile(File file, List<Item> items) { /* the rest ... */ } ###END"
+"How is class named Item whose fully qualified class name com.cloudurable.java2csv.Item declared? ###-->"," public class Item { /* the rest ... */ } ###END"
+"How is class named Item whose fully qualified class name com.cloudurable.java2csv.Item defined? ###-->"," public class Item {
 
     /**
      * Import body, the imports for the class.
@@ -895,166 +703,14 @@ private final List<Item> items; ##END"
             this.javadoc = javadoc;
             return this;
         }
- ##END"
-"What does class named com.cloudurable.java2csv.Item with fully qualified name Item do according to the JavaDoc?  ##-->","/**
+ ###END"
+"What does class named Item whose fully qualified class name com.cloudurable.java2csv.Item do according to the JavaDoc? ###-->"," /**
  * Represents an item in Java code, such as a class, method, or field.
  */
- ##END"
-"What are the imports for class named com.cloudurable.java2csv.Item with fully qualified name Item?  ##-->","import java.util.List;
- ##END"
-"What methods does class named com.cloudurable.java2csv.Item with fully qualified name Item have?  ##-->","public static List<String> headers() { /* the rest ... */ }
-public static Builder builder() { /* the rest ... */ }
-private String orEmptyString(String part) { /* the rest ... */ }
-public List<String> row() { /* the rest ... */ }
-public String getImportBody() { /* the rest ... */ }
-public String getBody() { /* the rest ... */ }
-public String getJavadoc() { /* the rest ... */ }
-public String getName() { /* the rest ... */ }
-public String getDefinition() { /* the rest ... */ }
-public Item getParent() { /* the rest ... */ }
-public JavaItemType getType() { /* the rest ... */ }
-@Override
-public String toString() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.headers (headers) do according to the JavaDoc?  ##-->","/**
- * Returns the column headers for the CSV representation of an Item.
- *
- * @return the column headers
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.headers (headers) from class com.cloudurable.java2csv.Item?  ##-->","public static List<String> headers() {
-    return List.of(""Name"", ""Type"", ""FullName"", ""Definition"", ""JavaDoc"", ""Parent"", ""Imports"", ""Body"");
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.headers (headers) from class com.cloudurable.java2csv.Item defined?  ##-->","public static List<String> headers() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.builder (builder) do according to the JavaDoc?  ##-->","/**
- * Returns a builder to construct an Item.
- *
- * @return the Item builder
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.builder (builder) from class com.cloudurable.java2csv.Item?  ##-->","public static Builder builder() {
-    return new Builder();
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.builder (builder) from class com.cloudurable.java2csv.Item defined?  ##-->","public static Builder builder() { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.orEmptyString (orEmptyString) from class com.cloudurable.java2csv.Item?  ##-->","private String orEmptyString(String part) {
-    return part == null ? """" : part;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.orEmptyString (orEmptyString) from class com.cloudurable.java2csv.Item defined?  ##-->","private String orEmptyString(String part) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.row (row) do according to the JavaDoc?  ##-->","/**
- * Returns a row representing the Item for the CSV output.
- *
- * @return the row representing the Item
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.row (row) from class com.cloudurable.java2csv.Item?  ##-->","public List<String> row() {
-    return List.of(simpleName, type.toString().toLowerCase(), name, definition, javadoc, parent != null ? parent.getName() : """", importBody, body);
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.row (row) from class com.cloudurable.java2csv.Item defined?  ##-->","public List<String> row() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.getImportBody (getImportBody) do according to the JavaDoc?  ##-->","/**
- * Returns the import statements associated with the item.
- *
- * @return the import statements
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.getImportBody (getImportBody) from class com.cloudurable.java2csv.Item?  ##-->","public String getImportBody() {
-    return importBody;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.getImportBody (getImportBody) from class com.cloudurable.java2csv.Item defined?  ##-->","public String getImportBody() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.getBody (getBody) do according to the JavaDoc?  ##-->","/**
- * Returns the source code body of the item.
- *
- * @return the source code body
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.getBody (getBody) from class com.cloudurable.java2csv.Item?  ##-->","public String getBody() {
-    return body;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.getBody (getBody) from class com.cloudurable.java2csv.Item defined?  ##-->","public String getBody() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.getJavadoc (getJavadoc) do according to the JavaDoc?  ##-->","/**
- * Returns the Javadoc documentation of the item.
- *
- * @return the Javadoc documentation
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.getJavadoc (getJavadoc) from class com.cloudurable.java2csv.Item?  ##-->","public String getJavadoc() {
-    return javadoc;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.getJavadoc (getJavadoc) from class com.cloudurable.java2csv.Item defined?  ##-->","public String getJavadoc() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.getName (getName) do according to the JavaDoc?  ##-->","/**
- * Returns the fully qualified name of the item.
- *
- * @return the fully qualified name
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.getName (getName) from class com.cloudurable.java2csv.Item?  ##-->","public String getName() {
-    return name;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.getName (getName) from class com.cloudurable.java2csv.Item defined?  ##-->","public String getName() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.getDefinition (getDefinition) do according to the JavaDoc?  ##-->","/**
- * Returns the definition of the item.
- *
- * @return the definition
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.getDefinition (getDefinition) from class com.cloudurable.java2csv.Item?  ##-->","public String getDefinition() {
-    return definition;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.getDefinition (getDefinition) from class com.cloudurable.java2csv.Item defined?  ##-->","public String getDefinition() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.getParent (getParent) do according to the JavaDoc?  ##-->","/**
- * Returns the parent item of the current item.
- *
- * @return the parent item
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.getParent (getParent) from class com.cloudurable.java2csv.Item?  ##-->","public Item getParent() {
-    return parent;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.getParent (getParent) from class com.cloudurable.java2csv.Item defined?  ##-->","public Item getParent() { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Item.getType (getType) do according to the JavaDoc?  ##-->","/**
- * Returns the type of the item.
- *
- * @return the item type
- */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.getType (getType) from class com.cloudurable.java2csv.Item?  ##-->","public JavaItemType getType() {
-    return type;
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.getType (getType) from class com.cloudurable.java2csv.Item defined?  ##-->","public JavaItemType getType() { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Item.toString (toString) from class com.cloudurable.java2csv.Item?  ##-->","@Override
-public String toString() {
-    return ""Item{"" + ""simpleName='"" + simpleName + ''' + "", type="" + type + "", name='"" + name + ''' + "", definition='"" + definition + ''' + "", parent="" + parent + "", importBody='"" + importBody + ''' + "", javadoc='"" + javadoc + ''' + "", body='"" + body + ''' + '}';
-} ##END"
-"How is the method com.cloudurable.java2csv.Item.toString (toString) from class com.cloudurable.java2csv.Item defined?  ##-->","@Override
-public String toString() { /* the rest ... */ } ##END"
-"What fields does class named com.cloudurable.java2csv.Item with fully qualified name Item have?  ##-->","private final String importBody;
-private final String body;
-private final String javadoc;
-private final String name;
-private final String simpleName;
-private final String definition;
-private final Item parent;
-private final JavaItemType type; ##END"
-"What is the field com.cloudurable.java2csv.Item.importBody (importBody) defined in class com.cloudurable.java2csv.Item do according to the JavaDoc?  ##-->","/**
- * Import body, the imports for the class.
- */
- ##END"
-"How is the field com.cloudurable.java2csv.Item.importBody (importBody) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final String importBody; ##END"
-"What is the field com.cloudurable.java2csv.Item.body (body) defined in class com.cloudurable.java2csv.Item do according to the JavaDoc?  ##-->","/**
- *  Code body, the whole code for the item.
- */
- ##END"
-"How is the field com.cloudurable.java2csv.Item.body (body) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final String body; ##END"
-"What is the field com.cloudurable.java2csv.Item.javadoc (javadoc) defined in class com.cloudurable.java2csv.Item do according to the JavaDoc?  ##-->","/**
- *  JavaDoc, the javadoc for the item.
- */
- ##END"
-"How is the field com.cloudurable.java2csv.Item.javadoc (javadoc) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final String javadoc; ##END"
-"How is the field com.cloudurable.java2csv.Item.name (name) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final String name; ##END"
-"How is the field com.cloudurable.java2csv.Item.simpleName (simpleName) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final String simpleName; ##END"
-"How is the field com.cloudurable.java2csv.Item.definition (definition) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final String definition; ##END"
-"How is the field com.cloudurable.java2csv.Item.parent (parent) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final Item parent; ##END"
-"How is the field com.cloudurable.java2csv.Item.type (type) which is in class com.cloudurable.java2csv.Item defined?  ##-->","private final JavaItemType type; ##END"
-"How is class com.cloudurable.java2csv.Builder (Builder) defined?  ##-->","public static class Builder { /* the rest ... */ } ##END"
-"What is the source code for class named com.cloudurable.java2csv.Builder with fully qualified name Builder?  ##-->","public static class Builder {
+ ###END"
+"What are the inner classes defined inside of class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public static class Builder { /* the rest ... */ } ###END"
+"How is class named Builder whose fully qualified class name com.cloudurable.java2csv.Item.Builder declared? ###-->"," public static class Builder { /* the rest ... */ } ###END"
+"How is class named Builder whose fully qualified class name com.cloudurable.java2csv.Item.Builder defined? ###-->"," public static class Builder {
 
     private String body;
 
@@ -1123,85 +779,161 @@ private final JavaItemType type; ##END"
     public Item build() {
         return new Item(importBody, body, javadoc, name, simpleName, definition, parent, type);
     }
-} ##END"
-"What does class named com.cloudurable.java2csv.Builder with fully qualified name Builder do according to the JavaDoc?  ##-->","/**
+} ###END"
+"What does class named Builder whose fully qualified class name com.cloudurable.java2csv.Item.Builder do according to the JavaDoc? ###-->"," /**
  * Builder class for constructing an Item.
  */
- ##END"
-"What are the imports for class named com.cloudurable.java2csv.Builder with fully qualified name Builder?  ##-->","import java.util.List;
- ##END"
-"What methods does class named com.cloudurable.java2csv.Builder with fully qualified name Builder have?  ##-->","public Builder simpleName(String simpleName) { /* the rest ... */ }
-public Builder type(JavaItemType type) { /* the rest ... */ }
-public Builder importBody(String importBody) { /* the rest ... */ }
-public Builder body(String body) { /* the rest ... */ }
-public Builder javadoc(String javadoc) { /* the rest ... */ }
-public Builder name(String name) { /* the rest ... */ }
-public Builder definition(String definition) { /* the rest ... */ }
-public Builder parent(Item parent) { /* the rest ... */ }
-public Item build() { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.simpleName (simpleName) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder simpleName(String simpleName) {
-    this.simpleName = simpleName;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.simpleName (simpleName) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder simpleName(String simpleName) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.type (type) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder type(JavaItemType type) {
-    this.type = type;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.type (type) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder type(JavaItemType type) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.importBody (importBody) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder importBody(String importBody) {
-    this.importBody = importBody;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.importBody (importBody) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder importBody(String importBody) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.body (body) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder body(String body) {
-    this.body = body;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.body (body) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder body(String body) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.javadoc (javadoc) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder javadoc(String javadoc) {
-    this.javadoc = javadoc;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.javadoc (javadoc) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder javadoc(String javadoc) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.name (name) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder name(String name) {
-    this.name = name;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.name (name) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder name(String name) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.definition (definition) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder definition(String definition) {
-    this.definition = definition;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.definition (definition) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder definition(String definition) { /* the rest ... */ } ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.parent (parent) from class com.cloudurable.java2csv.Builder?  ##-->","public Builder parent(Item parent) {
-    this.parent = parent;
-    return this;
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.parent (parent) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Builder parent(Item parent) { /* the rest ... */ } ##END"
-"What does method com.cloudurable.java2csv.Builder.build (build) do according to the JavaDoc?  ##-->","/**
- * Builds and returns the Item.
+ ###END"
+"What are the imports for class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," import java.util.List;
+ ###END"
+"What methods does class named Item whose fully qualified class name com.cloudurable.java2csv.Item have? ###-->"," public static List<String> headers() { /* the rest ... */ }
+public static Builder builder() { /* the rest ... */ }
+private String orEmptyString(String part) { /* the rest ... */ }
+public List<String> row() { /* the rest ... */ }
+public String getImportBody() { /* the rest ... */ }
+public String getBody() { /* the rest ... */ }
+public String getJavadoc() { /* the rest ... */ }
+public String getName() { /* the rest ... */ }
+public String getDefinition() { /* the rest ... */ }
+public Item getParent() { /* the rest ... */ }
+public JavaItemType getType() { /* the rest ... */ }
+@Override
+public String toString() { /* the rest ... */ } ###END"
+"What does method headers do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the column headers for the CSV representation of an Item.
  *
- * @return the constructed Item
+ * @return the column headers
  */
- ##END"
-"What is the source code for method com.cloudurable.java2csv.Builder.build (build) from class com.cloudurable.java2csv.Builder?  ##-->","public Item build() {
-    return new Item(importBody, body, javadoc, name, simpleName, definition, parent, type);
-} ##END"
-"How is the method com.cloudurable.java2csv.Builder.build (build) from class com.cloudurable.java2csv.Builder defined?  ##-->","public Item build() { /* the rest ... */ } ##END"
-"What fields does class named com.cloudurable.java2csv.Builder with fully qualified name Builder have?  ##-->","private String body;
-private String javadoc;
-private String name;
-private String definition;
-private Item parent;
-private String importBody;
-private String simpleName;
-private JavaItemType type; ##END"
-"How is the field com.cloudurable.java2csv.Builder.body (body) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private String body; ##END"
-"How is the field com.cloudurable.java2csv.Builder.javadoc (javadoc) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private String javadoc; ##END"
-"How is the field com.cloudurable.java2csv.Builder.name (name) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private String name; ##END"
-"How is the field com.cloudurable.java2csv.Builder.definition (definition) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private String definition; ##END"
-"How is the field com.cloudurable.java2csv.Builder.parent (parent) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private Item parent; ##END"
-"How is the field com.cloudurable.java2csv.Builder.importBody (importBody) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private String importBody; ##END"
-"How is the field com.cloudurable.java2csv.Builder.simpleName (simpleName) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private String simpleName; ##END"
-"How is the field com.cloudurable.java2csv.Builder.type (type) which is in class com.cloudurable.java2csv.Builder defined?  ##-->","private JavaItemType type; ##END"
+ ###END"
+"How is method headers defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public static List<String> headers() {
+    return List.of(""Name"", ""Type"", ""FullName"", ""Definition"", ""JavaDoc"", ""Parent"", ""Imports"", ""Body"");
+} ###END"
+"What is the method headers signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public static List<String> headers() { /* the rest ... */ } ###END"
+"What does method builder do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns a builder to construct an Item.
+ *
+ * @return the Item builder
+ */
+ ###END"
+"How is method builder defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public static Builder builder() {
+    return new Builder();
+} ###END"
+"What is the method builder signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public static Builder builder() { /* the rest ... */ } ###END"
+"How is method orEmptyString defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private String orEmptyString(String part) {
+    return part == null ? """" : part;
+} ###END"
+"What is the method orEmptyString signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private String orEmptyString(String part) { /* the rest ... */ } ###END"
+"What does method row do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns a row representing the Item for the CSV output.
+ *
+ * @return the row representing the Item
+ */
+ ###END"
+"How is method row defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public List<String> row() {
+    return List.of(simpleName, type.toString().toLowerCase(), name, definition, javadoc, parent != null ? parent.getName() : """", importBody, body);
+} ###END"
+"What is the method row signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public List<String> row() { /* the rest ... */ } ###END"
+"What does method getImportBody do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the import statements associated with the item.
+ *
+ * @return the import statements
+ */
+ ###END"
+"How is method getImportBody defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getImportBody() {
+    return importBody;
+} ###END"
+"What is the method getImportBody signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getImportBody() { /* the rest ... */ } ###END"
+"What does method getBody do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the source code body of the item.
+ *
+ * @return the source code body
+ */
+ ###END"
+"How is method getBody defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getBody() {
+    return body;
+} ###END"
+"What is the method getBody signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getBody() { /* the rest ... */ } ###END"
+"What does method getJavadoc do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the Javadoc documentation of the item.
+ *
+ * @return the Javadoc documentation
+ */
+ ###END"
+"How is method getJavadoc defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getJavadoc() {
+    return javadoc;
+} ###END"
+"What is the method getJavadoc signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getJavadoc() { /* the rest ... */ } ###END"
+"What does method getName do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the fully qualified name of the item.
+ *
+ * @return the fully qualified name
+ */
+ ###END"
+"How is method getName defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getName() {
+    return name;
+} ###END"
+"What is the method getName signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getName() { /* the rest ... */ } ###END"
+"What does method getDefinition do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the definition of the item.
+ *
+ * @return the definition
+ */
+ ###END"
+"How is method getDefinition defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getDefinition() {
+    return definition;
+} ###END"
+"What is the method getDefinition signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public String getDefinition() { /* the rest ... */ } ###END"
+"What does method getParent do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the parent item of the current item.
+ *
+ * @return the parent item
+ */
+ ###END"
+"How is method getParent defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public Item getParent() {
+    return parent;
+} ###END"
+"What is the method getParent signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public Item getParent() { /* the rest ... */ } ###END"
+"What does method getType do according to the JavaDoc from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," /**
+ * Returns the type of the item.
+ *
+ * @return the item type
+ */
+ ###END"
+"How is method getType defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public JavaItemType getType() {
+    return type;
+} ###END"
+"What is the method getType signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," public JavaItemType getType() { /* the rest ... */ } ###END"
+"How is method toString defined from class class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," @Override
+public String toString() {
+    return ""Item{"" + ""simpleName='"" + simpleName + ''' + "", type="" + type + "", name='"" + name + ''' + "", definition='"" + definition + ''' + "", parent="" + parent + "", importBody='"" + importBody + ''' + "", javadoc='"" + javadoc + ''' + "", body='"" + body + ''' + '}';
+} ###END"
+"What is the method toString signature from class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," @Override
+public String toString() { /* the rest ... */ } ###END"
+"What fields does class named Item whose fully qualified class name com.cloudurable.java2csv.Item have? ###-->"," private final String importBody;
+private final String body;
+private final String javadoc;
+private final String name;
+private final String simpleName;
+private final String definition;
+private final Item parent;
+private final JavaItemType type; ###END"
+"What is the field importBody defined in class named Item whose fully qualified class name com.cloudurable.java2csv.Item according to the JavaDoc? ###-->"," /**
+ * Import body, the imports for the class.
+ */
+ ###END"
+"How is the field importBody defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final String importBody; ###END"
+"What is the field body defined in class named Item whose fully qualified class name com.cloudurable.java2csv.Item according to the JavaDoc? ###-->"," /**
+ *  Code body, the whole code for the item.
+ */
+ ###END"
+"How is the field body defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final String body; ###END"
+"What is the field javadoc defined in class named Item whose fully qualified class name com.cloudurable.java2csv.Item according to the JavaDoc? ###-->"," /**
+ *  JavaDoc, the javadoc for the item.
+ */
+ ###END"
+"How is the field javadoc defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final String javadoc; ###END"
+"How is the field name defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final String name; ###END"
+"How is the field simpleName defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final String simpleName; ###END"
+"How is the field definition defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final String definition; ###END"
+"How is the field parent defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final Item parent; ###END"
+"How is the field type defined which is in class named Item whose fully qualified class name com.cloudurable.java2csv.Item? ###-->"," private final JavaItemType type; ###END"

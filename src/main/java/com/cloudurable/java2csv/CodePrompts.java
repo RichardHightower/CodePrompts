@@ -53,7 +53,7 @@ public class CodePrompts {
         final List<Item> methods = items.stream().filter(item -> item.getType() == JavaItemType.METHOD).collect(Collectors.toList());
         final List<Item> fields = items.stream().filter(item -> item.getType() == JavaItemType.FIELD).collect(Collectors.toList());
         final List<Item> classes = items.stream().filter(item -> item.getType() == JavaItemType.CLASS)
-                .filter(item -> item.getParent() == null || item.getParent().isBlank())
+                .filter(item -> item.getParent().isBlank())
                 .collect(Collectors.toList());
         final List<Item> enums = items.stream().filter(item -> item.getType() == JavaItemType.ENUM).collect(Collectors.toList());
 
@@ -61,8 +61,8 @@ public class CodePrompts {
         final Map<String, List<Item>> methodMap = methods.stream().collect(Collectors.groupingBy(Item::getParent, Collectors.toList()));
         final Map<String, List<Item>> fieldMap = fields.stream().collect(Collectors.groupingBy(Item::getParent, Collectors.toList()));
 
-        final Map<String, List<Item>> innerClassesMap = classes.stream()
-                .filter(item -> item.getParent() != null && !item.getParent().isBlank()).collect(Collectors.groupingBy(Item::getParent, Collectors.toList()));
+        final Map<String, List<Item>> innerClassesMap = items.stream().filter(item -> item.getType() == JavaItemType.CLASS)
+                .filter(item -> !item.getParent().isBlank()).collect(Collectors.groupingBy(Item::getParent, Collectors.toList()));
 
         return Context.builder().classes(classes).methods(methods).fields(fields).enums(enums)
                 .methodMap(methodMap).fieldMap(fieldMap).innerClassMap(innerClassesMap).build();
@@ -73,108 +73,116 @@ public class CodePrompts {
         try (CSVWriter writer = new CSVWriter(new FileWriter(outputFile))) {
             writer.writeNext(new String[]{"prompt", "completion"});
             context.getClasses().forEach(item -> {
-                writeClassDefinitionPrompt(writer, context, item);
-                writeClassBodyPrompt(writer, context, item);
-                writeJavaDocPrompt(writer, context, item);
-                writeInnerClassesPrompt(writer, context, item);
+                writeClassPromptDetails(writer, context, item);
+                writeInnerClassesPromptForClassItem(writer, context, item);
                 writeImportsPrompt(writer, context, item);
-                writeMethodsPrompt(writer, context, item);
-                writeFieldsPrompt(writer, context, item);
+                writeMethodsPromptForClassItem(writer, context, item);
+                writeFieldsPromptForClassItem(writer, context, item);
             });
         }
     }
 
+    private static void writeClassPromptDetails(CSVWriter writer, Context context, Item item) {
+        writeClassDefinitionPrompt(writer, context, item);
+        writeClassBodyPrompt(writer, context, item);
+        writeJavaDocPromptForClassItem(writer, context, item);
+    }
+
+
+    private static String createClassNamePrompt(final Item item) {
+        return String.format("class named %s whose fully qualified class name %s",
+                item.getSimpleName(), item.getFullyQualifiedName());
+    }
+
+    private static void writePrompt(CSVWriter writer, Context context, final String promptText,
+                                    final String completionText) {
+        final String prompt = String.format("%s%s%s", context.getPromptPrefix(), promptText, context.getPromptDelimiter());
+        final String completion = String.format("%s%s%s", context.getCompletionPrefix(), completionText,
+                context.getCompletionEndDelimiter());
+        writer.writeNext(new String[]{prompt,completion});
+    }
+
     private static void writeClassDefinitionPrompt(CSVWriter writer, Context context, Item item) {
-        String prompt = String.format("%sHow is class %s (%s) defined?  ##-->", context.getPrefix(), item.getName(), item.getSimpleName());
-        String completion = item.getDefinition();
-        writer.writeNext(new String[]{prompt, completion + " ##END"});
+        writePrompt(writer, context, String.format("How is %s declared?",
+                createClassNamePrompt(item)), item.getDefinition());
     }
 
     private static void writeClassBodyPrompt(CSVWriter writer, Context context, Item item) {
-        String prompt = String.format("%sWhat is the source code for class named %s with fully qualified name %s?  ##-->", context.getPrefix(), item.getName(), item.getSimpleName());
-        String completion = item.getBody();
-        writer.writeNext(new String[]{prompt, completion + " ##END"});
+        writePrompt(writer, context, String.format("How is %s defined?",
+                createClassNamePrompt(item)), item.getBody());
     }
 
-    private static void writeJavaDocPrompt(CSVWriter writer, Context context, Item item) {
+    private static void writeJavaDocPromptForClassItem(CSVWriter writer, Context context, Item item) {
         if (!item.getJavadoc().isBlank()) {
-            String prompt = String.format("%sWhat does class named %s with fully qualified name %s do according to the JavaDoc?  ##-->", context.getPrefix(), item.getName(), item.getSimpleName());
-            String completion = item.getJavadoc();
-            writer.writeNext(new String[]{prompt, completion + " ##END"});
+            writePrompt(writer, context, String.format("What does %s do according to the JavaDoc?",
+                    createClassNamePrompt(item)), item.getJavadoc());
         }
     }
 
-    private static void writeInnerClassesPrompt(CSVWriter writer, Context context, Item item) {
-        String prompt = String.format("%sWhat are the inner classes defined inside of class named %s with fully qualified name %s?  ##-->", context.getPrefix(), item.getName(), item.getSimpleName());
-        Optional<List<Item>> innerClasses = Optional.ofNullable(context.getInnerClassesMap().get(item.getName()));
-        String completion = innerClasses.map(cList -> cList.stream().map(Item::getDefinition).collect(Collectors.joining("\n"))).orElse("");
+    private static void writeInnerClassesPromptForClassItem(final CSVWriter writer, final Context context, Item classItem) {
+        final Optional<List<Item>> innerClasses = Optional.ofNullable(context.getInnerClassesMap().get(classItem.getFullyQualifiedName()));
+        final String completion = innerClasses.map(cList -> cList.stream().map(Item::getDefinition).collect(Collectors.joining("\n"))).orElse("");
         if (!completion.isBlank()) {
-            writer.writeNext(new String[]{prompt, completion + " ##END"});
+            writePrompt(writer, context, String.format("What are the inner classes defined inside of %s?",
+                    createClassNamePrompt(classItem)), completion);
+
         }
+        innerClasses.ifPresent(innerClassesList -> innerClassesList.forEach(innerClass -> writeClassPromptDetails(writer, context, innerClass)));
     }
 
     private static void writeImportsPrompt(CSVWriter writer, Context context, Item item) {
         if (!item.getImportBody().isBlank()) {
-            String prompt = String.format("%sWhat are the imports for class named %s with fully qualified name %s?  ##-->", context.getPrefix(), item.getName(), item.getSimpleName());
-            String completion = item.getImportBody();
-            writer.writeNext(new String[]{prompt, completion + " ##END"});
+            writePrompt(writer, context, String.format("What are the imports for %s?",
+                    createClassNamePrompt(item)), item.getImportBody());
         }
     }
 
-    private static void writeMethodsPrompt(CSVWriter writer, Context context, Item item) {
-        String prompt = String.format("%sWhat methods does class named %s with fully qualified name %s have?  ##-->", context.getPrefix(), item.getName(), item.getSimpleName());
-        Optional<List<Item>> methods = Optional.ofNullable(context.getMethodMap().get(item.getName()));
-        String completion = methods.map(mList -> mList.stream().map(Item::getDefinition).collect(Collectors.joining("\n"))).orElse("");
+    private static void writeMethodsPromptForClassItem(CSVWriter writer, Context context, Item classItem) {
+        Optional<List<Item>> methods = Optional.ofNullable(context.getMethodMap()
+                .get(classItem.getFullyQualifiedName()));
+        String completion = methods.map(mList -> mList.stream().map(Item::getDefinition)
+                .collect(Collectors.joining("\n"))).orElse("");
         if (!completion.isBlank()) {
-            writer.writeNext(new String[]{prompt, completion + " ##END"});
+            writePrompt(writer, context, String.format("What methods does %s have?",
+                    createClassNamePrompt(classItem)), completion);
         }
-
-        methods.ifPresent(methodList -> methodList.forEach(method -> writeEachMethodPrompt(writer, context, item, method)));
+        methods.ifPresent(methodList -> methodList.forEach(method ->
+                writeEachMethodPrompt(writer, context, classItem, method)));
     }
 
     private static void writeEachMethodPrompt(CSVWriter writer, Context context, Item parent, Item item) {
 
         if (!item.getJavadoc().isBlank()) {
-            String prompt = String.format("%sWhat does method %s (%s) do according to the JavaDoc?  ##-->",
-                    context.getPrefix(), item.getName(), item.getSimpleName());
-            String completion = item.getJavadoc();
-            writer.writeNext(new String[]{prompt, completion + " ##END"});
+            writePrompt(writer, context, String.format("What does method %s do according to the JavaDoc from %s?",
+                    item.getSimpleName(), createClassNamePrompt(parent)), item.getJavadoc());
         }
-
-        String prompt = String.format("%sWhat is the source code for method %s (%s) from class %s?  ##-->", context.getPrefix(),
-                item.getName(), item.getSimpleName(), parent.getName());
-        String completion = item.getBody();
-        writer.writeNext(new String[]{prompt, completion + " ##END"});
-
-        String prompt1 = String.format("%sHow is the method %s (%s) from class %s defined?  ##-->", context.getPrefix(),
-                item.getName(), item.getSimpleName(), parent.getName());
-        String completion1 = item.getDefinition();
-            writer.writeNext(new String[]{prompt1, completion1 + " ##END"});
+        writePrompt(writer, context, String.format("How is method %s defined from class %s?",
+                item.getSimpleName(), createClassNamePrompt(parent)), item.getBody());
+        writePrompt(writer, context, String.format("What is the method %s signature from %s?",
+                item.getSimpleName(), createClassNamePrompt(parent)), item.getDefinition());
 
     }
 
-    private static void writeFieldsPrompt(CSVWriter writer, Context context, Item item) {
-        String prompt = String.format("%sWhat fields does class named %s with fully qualified name %s have?  ##-->", context.getPrefix(), item.getName(), item.getSimpleName());
-        Optional<List<Item>> fields = Optional.ofNullable(context.getFieldMap().get(item.getName()));
-        String completion = fields.map(list -> list.stream().map(Item::getDefinition).collect(Collectors.joining("\n"))).orElse("");
-        writer.writeNext(new String[]{prompt, completion + " ##END"});
 
+    private static void writeFieldsPromptForClassItem(CSVWriter writer, Context context, Item item) {
+        Optional<List<Item>> fields = Optional.ofNullable(context.getFieldMap().get(item.getFullyQualifiedName()));
+        String completion = fields.map(list -> list.stream().map(Item::getDefinition).collect(Collectors.joining("\n"))).orElse("");
+        if (!completion.isBlank()) {
+            writePrompt(writer, context, String.format("What fields does %s have?",
+                    createClassNamePrompt(item)), completion);
+        }
         fields.ifPresent(fieldList -> fieldList.forEach(field -> writeEachFieldPrompt(writer, context, item, field)));
     }
 
     private static void writeEachFieldPrompt(CSVWriter writer, Context context, Item parent, Item item) {
 
         if (!item.getJavadoc().isBlank()) {
-            String prompt = String.format("%sWhat is the field %s (%s) defined in class %s do according to the JavaDoc?  ##-->",
-                    context.getPrefix(), item.getName(), item.getSimpleName(), parent.getName());
-            String completion = item.getJavadoc();
-            writer.writeNext(new String[]{prompt, completion + " ##END"});
+            writePrompt(writer, context, String.format("What is the field %s defined in %s according to the JavaDoc?",
+                    item.getSimpleName(), createClassNamePrompt(parent)), item.getJavadoc());
         }
 
-        String prompt1 = String.format("%sHow is the field %s (%s) which is in class %s defined?  ##-->", context.getPrefix(),
-                item.getName(), item.getSimpleName(), parent.getName());
-        String completion1 = item.getDefinition();
-            writer.writeNext(new String[]{prompt1, completion1 + " ##END"});
+        writePrompt(writer, context, String.format("How is the field %s defined which is in %s?",
+                item.getSimpleName(), createClassNamePrompt(parent)), item.getDefinition());
 
     }
 
@@ -186,12 +194,10 @@ public class CodePrompts {
             String[] nextLine;
             reader.readNext(); //skip first line
             while ((nextLine = reader.readNext()) != null) {
-
                 if (nextLine.length != 8) {
                     throw new IllegalStateException("Must be 8 columns");
                 }
-
-                items.add(Item.builder()
+                final Item item = Item.builder()
                         .simpleName(nextLine[0])
                         .type(JavaItemType.valueOf(nextLine[1].toUpperCase()))
                         .name(nextLine[2])
@@ -200,8 +206,8 @@ public class CodePrompts {
                         .parent(nextLine[5])
                         .importBody(nextLine[6])
                         .body(nextLine[7])
-                        .build());
-
+                        .build();
+                items.add(item);
             }
         }
         return items;
